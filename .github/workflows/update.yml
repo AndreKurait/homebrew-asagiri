@@ -1,0 +1,34 @@
+name: Update Homebrew cask
+
+on:
+  push:
+    branches: [main]
+    paths: ['scripts/**', 'tests/**', '.github/workflows/update.yml']
+  schedule:
+    - cron: '7,22,37,52 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: update-cask
+  cancel-in-progress: false
+
+jobs:
+  update:
+    if: github.repository == 'AndreKurait/homebrew-asagiri' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-slim
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Check version selection and download integrity rules
+        run: python3 tests/update.py
+      - name: Verify the release and publish its cask
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/update.py --publish
