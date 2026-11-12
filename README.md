@@ -33,6 +33,11 @@ updater verifies the release manifest, source commit, GitHub build provenance,
 and each architecture's DMG checksum. An older build finishing late cannot
 downgrade the selected version.
 
+Once a month it records a fresh successful provenance check in `release.json`,
+even if the app version is unchanged. This keeps the public tap maintained
+and avoids GitHub disabling its schedule after 60 days without repository
+activity. The cask and its version stay unchanged during this audit.
+
 Updates use this repository's temporary `GITHUB_TOKEN`; no personal token or
 cross-repository write credential is required. GitHub signs the automatic
 commit, and the updater checks its signature. Each update is signed off.

@@ -2,6 +2,7 @@
 """Update the Asagiri cask from a verified public GitHub release."""
 import argparse
 import base64
+from datetime import datetime, timezone
 import hashlib
 import json
 import os
@@ -104,7 +105,8 @@ def verify_release(release, folder):
         if subjects.get(name) != assets[name]["digest"][7:]:
             raise ValueError(f"Unattested release metadata: {name}")
     return {"repository": SOURCE, "version": manifest["version"], "tag": release["tag_name"],
-            "commit": commit, "downloads": downloads}
+            "commit": commit, "downloads": downloads,
+            "verified_month": datetime.now(timezone.utc).strftime("%Y-%m")}
 
 
 def cask(metadata):
@@ -174,7 +176,8 @@ def publish(metadata, changed):
             "branch": {"repositoryNameWithOwner": TAP, "refName": "main"},
             "expectedHeadOid": command("git", "rev-parse", "HEAD").strip(),
             "message": {
-                "headline": "Update Asagiri to " + metadata["version"],
+                "headline": (("Verify Asagiri release integrity for " if set(changed) == {"release.json"}
+                              else "Update Asagiri to ") + metadata["version"]),
                 "body": ("Verified release provenance and per-architecture DMG checksums.\n"
                          f"Source: {metadata['commit']}\n\n"
                          "Signed-off-by: github-actions[bot] "

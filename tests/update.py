@@ -65,6 +65,14 @@ class UpdateTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             update.cask(value)
 
+    def test_monthly_verification_updates_the_audit_record_without_changing_the_cask(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            value = {**metadata(), "verified_month": "2026-11"}
+            update.write_files(value, root)
+            value["verified_month"] = "2026-12"
+            self.assertEqual(set(update.write_files(value, root)), {"release.json"})
+
     def test_cannot_publish_from_a_local_or_another_repository_run(self):
         with patch.dict(update.os.environ, {}, clear=True), self.assertRaises(ValueError):
             update.publish(metadata(), {})
