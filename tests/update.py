@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 import importlib.util
+import copy
+import json
 from pathlib import Path
 import tempfile
 import unittest
@@ -23,6 +25,25 @@ def metadata():
                "sha256": letter * 64}
         for arch, letter in (("arm64", "a"), ("x86_64", "b"))
     }}
+
+
+def provenance(workflow_commit="b" * 40):
+    origin = "https://github.com/" + update.SOURCE
+    source = {"version": "0.1.1-dev.62", "commit": "a" * 40}
+    value = {"predicate": {
+        "buildDefinition": {
+            "externalParameters": {"workflow": {"path": ".github/workflows/release.yml",
+                                   "repository": origin, "ref": "refs/heads/main"}},
+            "resolvedDependencies": [
+                {"uri": f"git+{origin}@refs/heads/main", "digest": {"gitCommit": workflow_commit},
+                 "annotations": {"role": "build workflow"}},
+                {"uri": f"git+{origin}@{source['commit']}", "digest": {"gitCommit": source["commit"]},
+                 "annotations": {"role": "package source"}},
+            ],
+        },
+        "runDetails": {"metadata": {"invocationId": origin + "/actions/runs/123/attempts/2"}},
+    }}
+    return value, source
 
 
 class UpdateTests(unittest.TestCase):
@@ -76,6 +97,54 @@ class UpdateTests(unittest.TestCase):
     def test_cannot_publish_from_a_local_or_another_repository_run(self):
         with patch.dict(update.os.environ, {}, clear=True), self.assertRaises(ValueError):
             update.publish(metadata(), {})
+
+    def test_normal_and_recovered_publication_keep_both_source_identities(self):
+        for commit in ("a" * 40, "b" * 40):
+            value, source = provenance(commit)
+            self.assertEqual(update.publication_identity(value, source), (commit, "123", "2"))
+
+    def test_recovery_rejects_changed_source_wrong_workflow_and_duplicate_roles(self):
+        original, source = provenance()
+        cases = []
+        for field, value in (("path", ".github/workflows/unrelated.yml"),
+                             ("ref", "refs/heads/prototype"),
+                             ("repository", "https://github.com/someone/fork")):
+            changed = copy.deepcopy(original)
+            changed["predicate"]["buildDefinition"]["externalParameters"]["workflow"][field] = value
+            cases.append(changed)
+        changed = copy.deepcopy(original)
+        changed["predicate"]["buildDefinition"]["resolvedDependencies"][1]["digest"]["gitCommit"] = "c" * 40
+        cases.append(changed)
+        changed = copy.deepcopy(original)
+        changed["predicate"]["buildDefinition"]["resolvedDependencies"].append(
+            copy.deepcopy(changed["predicate"]["buildDefinition"]["resolvedDependencies"][0]))
+        cases.append(changed)
+        changed = copy.deepcopy(original)
+        changed["predicate"]["runDetails"]["metadata"]["invocationId"] = "https://example.com/actions/runs/123/attempts/2"
+        cases.append(changed)
+        for value in cases:
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                update.publication_identity(value, source)
+
+    def test_recovery_requires_successful_exact_attempt_and_reviewed_ancestry(self):
+        value, source = provenance()
+        publisher = {"path": ".github/workflows/release.yml",
+                     "repository": {"full_name": update.SOURCE}, "head_repository": {"full_name": update.SOURCE},
+                     "event": "workflow_dispatch", "head_branch": "main", "head_sha": "b" * 40,
+                     "status": "completed", "conclusion": "success"}
+        replies = [json.dumps(publisher), json.dumps({"merge_base_commit": {"sha": "a" * 40}}),
+                   json.dumps({"merge_base_commit": {"sha": "b" * 40}})]
+        with patch.object(update, "command", side_effect=replies) as calls:
+            self.assertEqual(update.verify_publisher(value, source), ("b" * 40, "123"))
+            self.assertTrue(calls.call_args_list[0].args[-1].endswith("/123/attempts/2"))
+        for field, invalid in (("conclusion", "failure"), ("status", "in_progress"),
+                               ("head_sha", "c" * 40), ("event", "pull_request")):
+            with patch.object(update, "command", return_value=json.dumps({**publisher, field: invalid})):
+                with self.assertRaises(ValueError):
+                    update.verify_publisher(value, source)
+        with patch.object(update, "command", side_effect=[replies[0], json.dumps({"merge_base_commit": {"sha": "c" * 40}})]):
+            with self.assertRaises(ValueError):
+                update.verify_publisher(value, source)
 
 
 if __name__ == "__main__":
