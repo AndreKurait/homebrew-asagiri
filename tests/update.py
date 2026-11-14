@@ -98,6 +98,19 @@ class UpdateTests(unittest.TestCase):
         with patch.dict(update.os.environ, {}, clear=True), self.assertRaises(ValueError):
             update.publish(metadata(), {})
 
+    def test_publication_uses_the_github_committable_branch_contract(self):
+        response = {"data": {"createCommitOnBranch": {"commit": {
+            "url": "https://github.com/" + update.TAP + "/commit/" + "a" * 40,
+            "signature": {"__typename": "GpgSignature", "isValid": True},
+        }}}}
+        environment = {"GITHUB_ACTIONS": "true", "GITHUB_REPOSITORY": update.TAP, "GITHUB_REF": "refs/heads/main"}
+        with patch.dict(update.os.environ, environment, clear=True), patch.object(
+                update, "command", side_effect=["a" * 40, json.dumps(response)]) as mocked:
+            update.publish(metadata(), {"Casks/asagiri.rb": "fixture"})
+            payload = json.loads(mocked.call_args.kwargs["input"])["variables"]["input"]
+            self.assertEqual(payload["branch"], {"repositoryNameWithOwner": update.TAP, "branchName": "main"})
+            self.assertEqual(payload["expectedHeadOid"], "a" * 40)
+
     def test_normal_and_recovered_publication_keep_both_source_identities(self):
         for commit in ("a" * 40, "b" * 40):
             value, source = provenance(commit)

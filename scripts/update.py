@@ -230,7 +230,7 @@ def publish(metadata, changed):
     payload = {
         "query": query,
         "variables": {"input": {
-            "branch": {"repositoryNameWithOwner": TAP, "refName": "main"},
+            "branch": {"repositoryNameWithOwner": TAP, "branchName": "main"},
             "expectedHeadOid": command("git", "rev-parse", "HEAD").strip(),
             "message": {
                 "headline": (("Verify Asagiri release integrity for " if set(changed) == {"release.json"}
