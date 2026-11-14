@@ -20,7 +20,7 @@ def release(tag, draft=False, prerelease=None):
 
 def metadata():
     version = "0.1.0-dev.37"
-    return {"version": version, "downloads": {
+    return {"version": version, "commit": "a" * 40, "downloads": {
         arch: {"url": f"https://github.com/{update.SOURCE}/releases/download/v{version}/Asagiri-{version}-{arch}.dmg",
                "sha256": letter * 64}
         for arch, letter in (("arm64", "a"), ("x86_64", "b"))
@@ -104,7 +104,7 @@ class UpdateTests(unittest.TestCase):
             "signature": {"__typename": "GpgSignature", "isValid": True},
         }}}}
         environment = {"GITHUB_ACTIONS": "true", "GITHUB_REPOSITORY": update.TAP, "GITHUB_REF": "refs/heads/main"}
-        with patch.dict(update.os.environ, environment, clear=True), patch.object(
+        with patch.dict(update.os.environ, environment, clear=True), patch("builtins.print"), patch.object(
                 update, "command", side_effect=["a" * 40, json.dumps(response)]) as mocked:
             update.publish(metadata(), {"Casks/asagiri.rb": "fixture"})
             payload = json.loads(mocked.call_args.kwargs["input"])["variables"]["input"]
