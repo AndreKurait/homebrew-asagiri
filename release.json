@@ -1,19 +1,19 @@
 {
   "repository": "AndreKurait/asagiri",
-  "version": "0.1.4",
-  "tag": "v0.1.4",
-  "commit": "5721ace0e34104e7411b426c96e60b38cae6f483",
+  "version": "0.1.5",
+  "tag": "v0.1.5",
+  "commit": "563c806c449d7d51c3c99c9be5b3a271abee22f1",
   "downloads": {
     "arm64": {
-      "url": "https://github.com/AndreKurait/asagiri/releases/download/v0.1.4/Asagiri-0.1.4-arm64.dmg",
-      "sha256": "ebfe074b10c28cedad3ff098bbb2eb3d04d4a73d32920824574f97df933ebe1f"
+      "url": "https://github.com/AndreKurait/asagiri/releases/download/v0.1.5/Asagiri-0.1.5-arm64.dmg",
+      "sha256": "2bb333be4362c9767e5733cabf9cd7bdae104d5457776689bf33aa998a6541b1"
     },
     "x86_64": {
-      "url": "https://github.com/AndreKurait/asagiri/releases/download/v0.1.4/Asagiri-0.1.4-x86_64.dmg",
-      "sha256": "6d6d667281118ac80fe61dbc6f09cf3a5bb72f3e7ab3f746ed21b2ce1198a413"
+      "url": "https://github.com/AndreKurait/asagiri/releases/download/v0.1.5/Asagiri-0.1.5-x86_64.dmg",
+      "sha256": "e43ff0cb827490c8f76a4296e5cfbb2c3859e9411a8a3b0813e71f687c2a8799"
     }
   },
-  "publication_commit": "5721ace0e34104e7411b426c96e60b38cae6f483",
-  "publication_run": "43643958982",
+  "publication_commit": "563c806c449d7d51c3c99c9be5b3a271abee22f1",
+  "publication_run": "43659967255",
   "verified_month": "2026-11"
 }
