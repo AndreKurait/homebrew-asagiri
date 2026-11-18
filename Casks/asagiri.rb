@@ -1,9 +1,9 @@
 cask "asagiri" do
   arch arm: "arm64", intel: "x86_64"
 
-  version "0.1.13"
-  sha256 arm:   "66cd6ab94e1f2c6f0704b23bbc97cedaa1f1e40c6d76e2a3e2d2b36412315fa1",
-         intel: "0b4b5c8282aa39de87c30ef8d8919b4b437f8342c21cb09f846264acc2638792"
+  version "0.1.14"
+  sha256 arm:   "18d2fc526e3419dbddf7f0b4d2d5f0137516f93a8ce707fb93aec519c1fb3bf9",
+         intel: "fac2b103b7b3cf1f1e4d44fbca83ed4909b93d530b9bcacab1fefa04568d5352"
 
   url "https://github.com/AndreKurait/asagiri/releases/download/v#{version}/Asagiri-#{version}-#{arch}.dmg"
   name "Asagiri"
